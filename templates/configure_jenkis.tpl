@@ -26,30 +26,30 @@ sudo update-rc.d jenkins defaults
 waitForJenkins
 
 # UPDATE PLUGIN LIST
-curl  -L http://updates.jenkins-ci.org/update-center.json | sed '1d;$d' | curl -X POST -H 'Accept: application/json' -d @- http://localhost:8080/updateCenter/byId/default/postBack
+#curl  -L http://updates.jenkins-ci.org/update-center.json | sed '1d;$d' | curl -X POST -H 'Accept: application/json' -d @- http://localhost:8080/updateCenter/byId/default/postBack
 
-sleep 10
+#sleep 10
 
-waitForJenkins
+#waitForJenkins
 
 # INSTALL CLI
-sudo cp /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar /var/lib/jenkins/jenkins-cli.jar
+#sudo cp /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar /var/lib/jenkins/jenkins-cli.jar
 
 # waitForPasswordFile
 
 PASS=$(sudo bash -c "cat /var/lib/jenkins/secrets/initialAdminPassword")
 
-sleep 10
+#sleep 10
 
 # SET AGENT PORT
-sudo service jenkins restart
+#sudo service jenkins restart
 
-waitForJenkins
+#waitForJenkins
 
-sleep 10
+#sleep 10
 
 # INSTALL PLUGINS
-sudo java -jar /var/lib/jenkins/jenkins-cli.jar -s http://localhost:8080 -auth admin:$PASS install-plugin git
+#sudo java -jar /var/lib/jenkins/jenkins-cli.jar -s http://localhost:8080 -auth admin:$PASS install-plugin git
 
 # RESTART JENKINS TO ACTIVATE PLUGINS
-sudo java -jar /var/lib/jenkins/jenkins-cli.jar -s http://localhost:8080 -auth admin:$PASS restart
+#sudo java -jar /var/lib/jenkins/jenkins-cli.jar -s http://localhost:8080 -auth admin:$PASS restart
