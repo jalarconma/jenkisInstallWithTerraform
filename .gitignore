@@ -1,0 +1,10 @@
+# Don't track content of these folders
+.terraform
+
+#Don't track these files
+java.ini
+mykey
+mykey.pub
+*.tfstate
+*.tfstate.*
+*.tfvars
