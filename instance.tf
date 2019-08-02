@@ -51,8 +51,8 @@ resource "aws_instance" "jenkins-ci" {
   }
   
   provisioner "file" {
-    source      = "templates/install_jenkins.sh"
-    destination = "/home/ubuntu/tmp/install_jenkins.sh"
+    source      = "templates/configure_jenkis.tpl"
+    destination = "/home/ubuntu/tmp/configure_jenkins.sh"
   }
   
   #Java install
@@ -72,6 +72,14 @@ resource "aws_instance" "jenkins-ci" {
 		"sudo apt-get install jenkins -y",
 		"sudo service jenkins start",
 	]
+  }
+  
+  #Jenkins configuration
+  provisioner "remote-exec" {
+    inline = [
+      "sudo chmod +x /home/ubuntu/tmp/configure_jenkins.sh",
+      "/home/ubuntu/tmp/configure_jenkins.sh",
+    ]
   }
 
   connection {
