@@ -13,6 +13,7 @@ pipeline {
         
         stage("Prepare") {
             steps {
+                sh 'echo "Hello World, Im preparing"'
                 sshCommand remote: remote, command: 'sudo -u wildfly /opt/bitnami/wildfly/bin/jboss-cli.sh --connect --command="undeploy myApp.war"'
             }
         }
@@ -38,6 +39,7 @@ pipeline {
         stage('Deploy') {
             steps {
                  sh 'echo "Hello World, Im deploying"'
+                 sshCommand remote: remote, command: 'sudo -u wildfly /opt/bitnami/wildfly/bin/jboss-cli.sh --connect --command="deploy --force myApp.war"'
             }
         }
 
