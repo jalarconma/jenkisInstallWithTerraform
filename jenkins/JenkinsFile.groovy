@@ -1,11 +1,20 @@
 #!groovy
 
+def remote = [:]
+remote.name = "ec2-3-87-205-14.compute-1.amazonaws.com"
+remote.host = "ec2-3-87-205-14.compute-1.amazonaws.com"
+remote.user = "ubuntu"
+remote.identityFile = "server-app-key"
+remote.allowAnyHosts = true
+
 pipeline {
     agent any
     stages {
-        stage('Prepare') {
+        
+        stage("Prepare") {
             steps {
-                 sh 'echo "Hello World, Im preparing"'
+                sh 'echo "Hello World, Im preparing"'
+                sshCommand remote: remote, command: 'sudo -u wildfly /opt/bitnami/wildfly/bin/jboss-cli.sh --connect --command="undeploy myApp.war"'
             }
         }
 
