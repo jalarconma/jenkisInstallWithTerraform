@@ -14,7 +14,7 @@ pipeline {
         stage("Prepare") {
             steps {
                 sh 'echo "Hello World, Im preparing"'
-                sshCommand remote: remote, command: 'sudo -u wildfly /opt/bitnami/wildfly/bin/jboss-cli.sh --connect --command="undeploy myApp.war"'
+                sshCommand remote: remote, command: '-u wildfly /opt/bitnami/wildfly/bin/jboss-cli.sh --connect --command="undeploy myApp.war"'
             }
         }
 
