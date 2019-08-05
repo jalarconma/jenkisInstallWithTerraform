@@ -3,37 +3,37 @@
 pipeline {
     agent any
     stages {
-        stage('Prepare'){
+        stage('Prepare') {
             steps {
                  sh 'echo "Hello World, Im preparing"'
             }
         }
 
-        stage('Download from repository'){
+        stage('Download from repository') {
             steps {
                  sh 'echo "Hello World, Im pulling"'
             }
         }
 
-        stage('Build'){
+        stage('Build') {
             steps {
                  sh 'echo "Hello World, Im building"'
             }
         }
 
-        stage('Upload artifacts'){
+        stage('Upload artifacts') {
             steps {
                  sh 'echo "Hello World, Im uploading"'
             }
         }
 
-        stage('Deploy'){
+        stage('Deploy') {
             steps {
                  sh 'echo "Hello World, Im deploying"'
             }
         }
 
-        stage('Test'){
+        stage('Test') {
             steps {
                  sh 'echo "Hello World, Im testing"'
             }

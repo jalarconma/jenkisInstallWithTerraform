@@ -3,18 +3,31 @@ resource "aws_key_pair" "demo_key" {
   public_key = file(var.PATH_TO_PUBLIC_KEY)
 }
 
-/*
-resource "aws_vpc" "my-vpc" {
-  cidr_block           = "10.0.0.0/16" # Defines overall VPC address space
-  enable_dns_hostnames = true          # Enable DNS hostnames for this VPC
-  enable_dns_support   = true          # Enable DNS resolving support for this VPC
-  instance_tenancy     = "default"
-  enable_classiclink   = "false"
-  tags {
-    Name = "VPC-my-vpc" # Tag VPC with name
+resource "aws_instance" "wildfly" {
+  ami           = "ami-089210bc871785ac4"
+  instance_type = "t2.micro"
+  key_name      = aws_key_pair.demo_key.key_name 
+  
+  provisioner "file" {
+    source      = "binaries/helloworldjsf22.war"
+    destination = "myApp.war"
+  }
+  
+  provisioner "remote-exec" {     
+    inline = [
+		"sleep 240",
+		"sudo cp myApp.war /opt/bitnami/wildfly/bin/myApp.war",
+		"sudo -u wildfly /opt/bitnami/wildfly/bin/jboss-cli.sh --connect --command=\"deploy --force myApp.war\"",
+	]   
+  }
+  
+  connection {
+    host        = coalesce(self.public_ip, self.private_ip)
+    type        = "ssh"
+    user        = var.INSTANCE_USERNAME
+    private_key = file(var.PATH_TO_PRIVATE_KEY)
   }
 }
-*/
 
 resource "aws_instance" "jenkins-ci" {
   count = "${var.instance_count}"
@@ -31,16 +44,6 @@ resource "aws_instance" "jenkins-ci" {
     "${aws_security_group.ping-ICMP.id}",
 	"${aws_security_group.web_server.id}"
   ]
-
-
-  ebs_block_device {
-    device_name           = "/dev/sdg"
-    volume_size           = 500
-    volume_type           = "io1"
-    iops                  = 2000
-    encrypted             = true
-    delete_on_termination = true
-  }
   
   provisioner "remote-exec" {     
     inline = [       
@@ -188,6 +191,10 @@ resource "aws_security_group" "web_server" {
   tags = {
     Name = "web_server-example-default-vpc"
   }
+}
+
+output "url-App" {
+  value = "http://${aws_instance.wildfly.public_ip}/myApp/index.jsf"
 }
 
 output "url-jenkins" {
