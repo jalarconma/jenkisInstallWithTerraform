@@ -15,7 +15,7 @@ resource "aws_instance" "wildfly" {
   
   provisioner "remote-exec" {     
     inline = [
-		"sleep 240",
+		"sleep 150",
 		"sudo cp myApp.war /opt/bitnami/wildfly/bin/myApp.war",
 		"sudo -u wildfly /opt/bitnami/wildfly/bin/jboss-cli.sh --connect --command=\"deploy --force myApp.war\"",
 	]   
@@ -82,6 +82,24 @@ resource "aws_instance" "jenkins-ci" {
     inline = [
       "sudo chmod +x /home/ubuntu/tmp/configure_jenkins.sh",
       "/home/ubuntu/tmp/configure_jenkins.sh",
+    ]
+  }
+  
+  provisioner "file" {
+    source      = "mykey"
+    destination = "server-app-key"
+  }
+  
+  provisioner "file" {
+    source      = "mykey.pub"
+    destination = "server-app-key.pub"
+  }
+  
+  provisioner "remote-exec" {
+    inline = [
+		"sudo mkdir /var/lib/jenkins/.ssh",
+		"sudo mv server-app-key /var/lib/jenkins/.ssh/server-app-key",
+		"sudo mv server-app-key.pub /var/lib/jenkins/.ssh/server-app-key.pub",
     ]
   }
 
