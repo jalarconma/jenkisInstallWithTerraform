@@ -8,3 +8,4 @@ mykey.pub
 *.tfstate
 *.tfstate.*
 *.tfvars
+*.zip
