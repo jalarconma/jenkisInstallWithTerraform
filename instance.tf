@@ -4,20 +4,49 @@ resource "aws_key_pair" "demo_key" {
 }
 
 resource "aws_instance" "wildfly" {
-  ami           = "ami-089210bc871785ac4"
+  ami           = var.ami
   instance_type = "t2.micro"
   key_name      = aws_key_pair.demo_key.key_name 
+  
+  vpc_security_group_ids = [
+    "${aws_security_group.web.id}",
+    "${aws_security_group.ssh.id}",
+    "${aws_security_group.egress-tls.id}",
+    "${aws_security_group.ping-ICMP.id}",
+	"${aws_security_group.web_server.id}"
+  ]
   
   provisioner "file" {
     source      = "binaries/helloworldjsf22.war"
     destination = "myApp.war"
   }
   
+  provisioner "file" {
+    source      = "server/jboss-eap-7.1.zip"
+    destination = "jboss-eap-7.1.zip"
+  }
+  
+  #Java install
+  provisioner "remote-exec" {
+    inline = [
+	  "sudo apt-get -y update",
+      "sudo apt-get -y install openjdk-8-jdk",
+	  "JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64",
+	  "PATH=$PATH:$HOME/bin:$JAVA_HOME/bin",
+      "export JAVA_HOME",
+      "export JRE_HOME",
+      "export PATH",
+    ]
+  }
+  
+  #Jboss eap install
   provisioner "remote-exec" {     
     inline = [
-		"sleep 150",
-		"sudo cp myApp.war /opt/bitnami/wildfly/bin/myApp.war",
-		"sudo -u wildfly /opt/bitnami/wildfly/bin/jboss-cli.sh --connect --command=\"deploy --force myApp.war\"",
+		"sudo apt-get install unzip -y",
+		"sudo mkdir /opt/jboss/",
+		"sudo mv jboss-eap-7.1.zip /opt/jboss/",
+		"cd /opt/jboss/",
+		"sudo unzip jboss-eap-7.1.zip",
 	]   
   }
   
