@@ -70,7 +70,8 @@ resource "aws_instance" "jenkins-cli-wildfly" {
 	inline = [
 		"sudo wget http://mirrors.jenkins.io/war-stable/latest/jenkins.war",
 		"sudo mv /home/ubuntu/jenkins.war /opt/tomcat/apache-tomcat-9.0.22/webapps/jenkins.war",
-		"sudo chmod +x /opt/tomcat/apache-tomcat-9.0.22/bin/catalina.sh"
+		"sudo chmod +x /opt/tomcat/apache-tomcat-9.0.22/bin/catalina.sh",
+		"sudo bash /opt/tomcat/apache-tomcat-9.0.22/bin/startup.sh"
 	]
   }
   
@@ -202,5 +203,5 @@ output "app-jboss-url" {
 }
 
 output "jenkins-tomcat-url" {
-  value = "http://${aws_instance.jenkins-cli-wildfly.public_ip}:8585"
+  value = "http://${aws_instance.jenkins-cli-wildfly.public_ip}:8585/jenkins"
 }
