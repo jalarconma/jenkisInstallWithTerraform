@@ -3,7 +3,7 @@ resource "aws_key_pair" "demo_key" {
   public_key = file(var.PATH_TO_PUBLIC_KEY)
 }
 
-resource "aws_instance" "wildfly" {
+resource "aws_instance" "jenkins-cli-wildfly" {
   ami           = var.ami
   instance_type = "t2.micro"
   key_name      = aws_key_pair.demo_key.key_name 
@@ -26,6 +26,11 @@ resource "aws_instance" "wildfly" {
     destination = "jboss-eap-7.1.zip"
   }
   
+  provisioner "file" {
+    source      = "server/apache-tomcat-9.0.22.zip"
+    destination = "apache-tomcat-9.0.22.zip"
+  }
+  
   #Java install
   provisioner "remote-exec" {
     inline = [
@@ -36,13 +41,13 @@ resource "aws_instance" "wildfly" {
       "export JAVA_HOME",
       "export JRE_HOME",
       "export PATH",
+	  "sudo apt-get install unzip -y",
     ]
   }
   
   #Jboss eap install
   provisioner "remote-exec" {     
     inline = [
-		"sudo apt-get install unzip -y",
 		"sudo mkdir /opt/jboss/",
 		"sudo mv jboss-eap-7.1.zip /opt/jboss/",
 		"cd /opt/jboss/",
@@ -50,99 +55,30 @@ resource "aws_instance" "wildfly" {
 	]   
   }
   
+  #Tomcat 9 install
+  provisioner "remote-exec" {     
+    inline = [
+		"sudo mkdir /opt/tomcat/",
+		"sudo mv apache-tomcat-9.0.22.zip /opt/tomcat/",
+		"cd /opt/tomcat/",
+		"sudo unzip apache-tomcat-9.0.22.zip",
+	]   
+  }
+  
+  #deploy jenkins
+  
+  tags = {
+    Name     = "jenkins-cli-wildfly"
+    Batch    = "7AM"
+    Location = "US"
+  }
+  
+  
   connection {
     host        = coalesce(self.public_ip, self.private_ip)
     type        = "ssh"
     user        = var.INSTANCE_USERNAME
     private_key = file(var.PATH_TO_PRIVATE_KEY)
-  }
-}
-
-resource "aws_instance" "jenkins-ci" {
-  count = "${var.instance_count}"
-
-  #ami = "${lookup(var.amis,var.region)}"
-  ami           = "${var.ami}"
-  instance_type = "${var.instance}"
-  key_name      = "${aws_key_pair.demo_key.key_name}"
-
-  vpc_security_group_ids = [
-    "${aws_security_group.web.id}",
-    "${aws_security_group.ssh.id}",
-    "${aws_security_group.egress-tls.id}",
-    "${aws_security_group.ping-ICMP.id}",
-	"${aws_security_group.web_server.id}"
-  ]
-  
-  provisioner "remote-exec" {     
-    inline = [       
-      "cd /home/ubuntu",
-      "sudo mkdir tmp",
-      "sudo chmod -R a+rwx /home/ubuntu/tmp",            
-    ]   
-  }
-  
-  provisioner "file" {
-    source      = "templates/configure_jenkis.tpl"
-    destination = "/home/ubuntu/tmp/configure_jenkins.sh"
-  }
-  
-  #Java install
-  provisioner "remote-exec" {
-    inline = [
-	  "sudo apt-get -y update",
-      "sudo apt-get -y install openjdk-8-jdk",
-    ]
-  }
-  
-  #Jenkins Install
-  provisioner "remote-exec" {
-	inline = [
-		"sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'",
-		"sudo wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -",
-		"sudo apt-get update -y",
-		"sudo apt-get install jenkins -y",
-		"sudo service jenkins start",
-	]
-  }
-  
-  #Jenkins configuration
-  provisioner "remote-exec" {
-    inline = [
-      "sudo chmod +x /home/ubuntu/tmp/configure_jenkins.sh",
-      "/home/ubuntu/tmp/configure_jenkins.sh",
-    ]
-  }
-  
-  provisioner "file" {
-    source      = "mykey"
-    destination = "server-app-key"
-  }
-  
-  provisioner "file" {
-    source      = "mykey.pub"
-    destination = "server-app-key.pub"
-  }
-  
-  provisioner "remote-exec" {
-    inline = [
-		"sudo mkdir /var/lib/jenkins/.ssh",
-		"sudo mv server-app-key /var/lib/jenkins/.ssh/server-app-key",
-		"sudo mv server-app-key.pub /var/lib/jenkins/.ssh/server-app-key.pub",
-    ]
-  }
-
-  connection {
-    host        = coalesce(self.public_ip, self.private_ip)
-    type        = "ssh"
-    private_key = file(var.PATH_TO_PRIVATE_KEY)
-    user        = "${var.ansible_user}"
-  }
-  
-  tags = {
-    Name     = "jenkins-ci-${count.index +1 }"
-    Batch    = "7AM"
-    Location = "US"
   }
 }
 
@@ -154,6 +90,13 @@ resource "aws_security_group" "web" {
   ingress {
     from_port   = 80
     to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+  ingress {
+    from_port   = 85
+    to_port     = 85
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -234,6 +177,13 @@ resource "aws_security_group" "web_server" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  
+  ingress {
+    from_port   = 8585
+    to_port     = 8585
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   tags = {
     Name = "web_server-example-default-vpc"
@@ -241,9 +191,9 @@ resource "aws_security_group" "web_server" {
 }
 
 output "url-App" {
-  value = "http://${aws_instance.wildfly.public_ip}/myApp/index.jsf"
+  value = "http://${aws_instance.jenkins-cli-wildfly.public_ip}/myApp/index.jsf"
 }
 
-output "url-jenkins" {
-  value = "http://${aws_instance.jenkins-ci.0.public_ip}:8080"
-}
+#output "url-jenkins" {
+#  value = "http://${aws_instance.jenkins-ci.0.public_ip}:8080"
+#}
