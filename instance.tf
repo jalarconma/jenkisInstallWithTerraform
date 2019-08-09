@@ -66,6 +66,13 @@ resource "aws_instance" "jenkins-cli-wildfly" {
   }
   
   #deploy jenkins
+  provisioner "remote-exec" {
+	inline = [
+		"sudo wget http://mirrors.jenkins.io/war-stable/latest/jenkins.war",
+		"sudo mv /home/ubuntu/jenkins.war /opt/tomcat/apache-tomcat-9.0.22/webapps/jenkins.war",
+		"sudo chmod +x /opt/tomcat/apache-tomcat-9.0.22/bin/catalina.sh"
+	]
+  }
   
   tags = {
     Name     = "jenkins-cli-wildfly"
@@ -190,10 +197,10 @@ resource "aws_security_group" "web_server" {
   }
 }
 
-output "url-App" {
-  value = "http://${aws_instance.jenkins-cli-wildfly.public_ip}/myApp/index.jsf"
+output "app-jboss-url" {
+  value = "http://${aws_instance.jenkins-cli-wildfly.public_ip}:8080"
 }
 
-#output "url-jenkins" {
-#  value = "http://${aws_instance.jenkins-ci.0.public_ip}:8080"
-#}
+output "jenkins-tomcat-url" {
+  value = "http://${aws_instance.jenkins-ci.0.public_ip}:8585"
+}
