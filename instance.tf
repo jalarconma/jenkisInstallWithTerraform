@@ -202,5 +202,5 @@ output "app-jboss-url" {
 }
 
 output "jenkins-tomcat-url" {
-  value = "http://${aws_instance.jenkins-ci.0.public_ip}:8585"
+  value = "http://${aws_instance.jenkins-cli-wildfly.public_ip}:8585"
 }
