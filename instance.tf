@@ -5,7 +5,7 @@ resource "aws_key_pair" "demo_key" {
 
 resource "aws_instance" "jenkins-cli-wildfly" {
   ami           = var.ami
-  instance_type = "t2.micro"
+  instance_type = "t2.small"
   key_name      = aws_key_pair.demo_key.key_name 
   
   vpc_security_group_ids = [
